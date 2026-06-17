@@ -5,31 +5,30 @@
 namespace fcl
 {
 
-    enum class StatusCode : std::uint8_t
+enum class StatusCode : std::uint8_t
+{
+    Ok = 0,
+    InvalidArgument,
+    Timeout,
+    Fault,
+    BufferFull
+};
+
+struct Status
+{
+    StatusCode code{StatusCode::Ok};
+
+    [[nodiscard]] constexpr bool ok() const noexcept
     {
-        Ok = 0,
-        InvalidArgument,
-        Timeout,
-        Fault,
-        BufferFull
-    };
+        return code == StatusCode::Ok;
+    }
 
-    struct Status
+    [[nodiscard]] static constexpr Status from(StatusCode c) noexcept
     {
-        StatusCode code{StatusCode::Ok};
+        return Status{c};
+    }
+};
 
-        [[nodiscard]] constexpr bool ok() const noexcept
-        {
-            return code == StatusCode::Ok;
-        }
-
-        [[nodiscard]] static constexpr Status from(StatusCode c) noexcept
-        {
-            return Status{c};
-        }
-    };
-
-    inline constexpr Status ok_status{StatusCode::Ok};
+inline constexpr Status ok_status{StatusCode::Ok};
 
 }
-

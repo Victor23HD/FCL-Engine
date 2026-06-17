@@ -8,9 +8,15 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(fcl_core INTERFACE)
 target_include_directories(fcl_core INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/sensors
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
 
-add_executable(fcl_hello src/main.cpp)
+add_executable(fcl_hello
+    src/main.cpp
+    src/sensors/virtual_hydraulic_sensor.cpp
+    src/voting/tmr_voter.cpp
+)
+
 target_link_libraries(fcl_hello PRIVATE fcl_core)

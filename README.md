@@ -1,35 +1,45 @@
 # FCL-Engine
 
-A concurrent and deterministic simulation engine in modern C++ focused on the management and degradation of Flight Control Laws (FCL) under critical hardware failures.
+C++20 smoke-test simulator for flight control law degradation: three hydraulic pressure channels (TMR), a simple reading queue, heartbeat check, and mode selection (Normal / Alternate).
 
-The objective of this project is to demonstrate high-reliability software infrastructure (DAL A compliance) and reactive fault-mitigation at runtime.
+Not production avionics — a learning/portfolio project toward embedded targets (Docker x86, Raspberry Pi later).
 
----
+## What runs today
 
-## 🛠️ Low-Level Strict Constraints
+Build with CMake 3.20+:
 
-The engine is developed under strict constraints typical of safety-critical embedded systems:
+```bash
+cmake -B build
+cmake --build build
+./build/Debug/fcl_hello    # Windows: build\Debug\fcl_hello.exe
+```
 
-* **Zero Dynamic Allocation:** The use of `new`, `malloc`, or dynamic containers is strictly forbidden during the active cycle. All memory is pre-allocated in static memory pools at startup to ensure predictability.
-* **No Exception Handling (`try-catch`):** Purely deterministic execution flow. Errors are mapped and handled in constant time via fixed-size static types to eliminate undefined behavior.
-* **Temporal Determinism:** No I/O operations, file parsing, or blocking mechanisms (locks) at runtime.
+The demo samples three virtual sensors (channel C injected faulty), runs 2-of-3 TMR voting, maps vote result to a flight control mode, drains the queue, and prints logs.
 
----
-
-## 🎯 Implemented Critical Components
-
-1. **Telemetry Layer:** Isolated threads communicating via lock-free circular buffers to eliminate race conditions.
-2. **Triple Modular Redundancy (TMR):** Voting logic mechanism to isolate faulty sensors and consolidate valid telemetry data.
-3. **Active Watchdog:** Strict millisecond-level heartbeat monitoring designed to trigger emergency state transitions (*Normal Law* ➔ *Alternate Law* ➔ *Direct Law*).
-4. **Offline/Online Validation (DO-330):** An offline utility (`/generator`) validates engineering limits and generates immutable data structures (`constexpr`) at compile-time, shielding the runtime environment.
-
----
-
-## 📂 Repository Structure
+## Layout
 
 ```text
-├── .github/workflows/   # CI/CD Pipeline (Build & Test via GTest)
-├── generator/           # Offline tool for parameter validation
-├── include/fcl/         # Engine headers and fixed-size type definitions
-├── src/                 # System threads, TMR, and FCL Engine implementation
-└── tests/               # Automated unit tests (GoogleTest)
+include/fcl/     headers (core, sensors, messaging, voting, watchdog)
+src/             main, virtual_hydraulic_sensor, tmr_voter
+```
+
+## References
+
+Material I read while shaping this code (links verified manually):
+
+### Flight control & FBW
+
+- [Skybrary — Flight Control Laws](https://skybrary.aero/articles/flight-control-laws)
+- [Airbus — Safety innovation #1: Fly-by-wire (FBW)](https://www.airbus.com/en/newsroom/stories/2022-06-safety-innovation-1-fly-by-wire-fbw)
+
+### Redundancy, watchdog, messaging
+
+- [Wikipedia — Triple modular redundancy](https://en.wikipedia.org/wiki/Triple_modular_redundancy)
+- [Wikipedia — Watchdog timer](https://en.wikipedia.org/wiki/Watchdog_timer)
+- [Wikipedia — Circular buffer](https://en.wikipedia.org/wiki/Circular_buffer) (ring queue; lock-free SPSC planned)
+
+## Planned (not in repo yet)
+
+- Sensor threads + lock-free SPSC queues
+- Dedicated watchdog thread
+- GTest, CI, config generator, HMI
