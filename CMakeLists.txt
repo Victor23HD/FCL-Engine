@@ -13,10 +13,43 @@ target_include_directories(fcl_core INTERFACE
     $<INSTALL_INTERFACE:include>
 )
 
-add_executable(fcl_hello
-    src/main.cpp
+find_package(Threads REQUIRED)
+
+add_library(fcl_engine STATIC
+    src/flight/flight_control_engine.cpp
+    src/sensors/sensor_worker.cpp
     src/sensors/virtual_hydraulic_sensor.cpp
     src/voting/tmr_voter.cpp
+    src/watchdog/watchdog_monitor.cpp
 )
 
-target_link_libraries(fcl_hello PRIVATE fcl_core)
+target_link_libraries(fcl_engine PUBLIC fcl_core Threads::Threads)
+
+add_executable(fcl_hello src/main.cpp)
+target_link_libraries(fcl_hello PRIVATE fcl_engine)
+
+option(FCL_BUILD_TESTS "Build unit tests" ON)
+
+if(FCL_BUILD_TESTS)
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+    )
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
+
+    enable_testing()
+
+    add_executable(fcl_tests
+        tests/test_tmr_voter.cpp
+        tests/test_spsc_queue.cpp
+        tests/test_heartbeat.cpp
+        tests/test_flight_engine.cpp
+    )
+
+    target_link_libraries(fcl_tests PRIVATE fcl_engine GTest::gtest_main)
+
+    include(GoogleTest)
+    gtest_discover_tests(fcl_tests)
+endif()

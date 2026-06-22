@@ -11,6 +11,11 @@ VirtualHydraulicSensor::VirtualHydraulicSensor(SensorId id, float pressure_bar)
 {
 }
 
+void VirtualHydraulicSensor::set_freeze_heartbeat(bool freeze) noexcept
+{
+    freeze_heartbeat_ = freeze;
+}
+
 SensorId VirtualHydraulicSensor::id() const noexcept
 {
     return id_;
@@ -31,7 +36,11 @@ Status VirtualHydraulicSensor::sample(SensorReading& out) noexcept
 
     out.timestamp_ns = static_cast<TimestampNs>(sequence_) * 10000000u;
 
-    heartbeat_++;
+    if (!freeze_heartbeat_)
+    {
+        heartbeat_++;
+    }
+
     return ok_status;
 }
 
